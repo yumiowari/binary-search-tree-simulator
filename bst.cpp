@@ -72,7 +72,9 @@ class BinarySearchTree{
             }
         }
 
-        void printDOT(){
+        void printDOTcode(){
+        // o grafo será renderizado a partir do código DOT gerado a partir das conexões em generateDOTconnections()
+
             std::cout << "digraph G {" << std::endl;
 
             // Configurações de estilo do grafo
@@ -88,13 +90,28 @@ class BinarySearchTree{
             std::cout << "}" << std::endl;
         }
 
-        // percurso em pré-ordem para manter a estrutura original ao reconstruir a árvore
-        void collectElements(node *n, std::vector<int> &V){
+        void inOrder(node *n, std::vector<int> &V){
+            if(n == nullptr)return;
+
+            inOrder(n->left, V);
+            V.push_back(n->value);
+            inOrder(n->right, V);
+        }
+
+        void preOrder(node *n, std::vector<int> &V){
             if(n == nullptr)return;
 
             V.push_back(n->value);
-            collectElements(n->left, V);
-            collectElements(n->right, V);
+            preOrder(n->left, V);
+            preOrder(n->right, V);
+        }
+
+        void postOrder(node *n, std::vector<int> &V){
+            if(n == nullptr)return;
+
+            postOrder(n->left, V);
+            postOrder(n->right, V);
+            V.push_back(n->value);
         }
 };
 
@@ -109,50 +126,86 @@ int main(int argc, char **argv){
         return 0;
     }
 
-    std::string original_array = argv[1];
-    std::string operation = argv[2];
-    int value = std::stoi(argv[3]);
+    std::string original_in_order = argv[1];
+    std::string original_pre_order = argv[2];
+    std::string original_post_order = argv[3];
+    std::string operation = argv[4];
+    int value = std::stoi(argv[5]);
 
     BinarySearchTree bst;
 
-    // 1. Reconstrói a árvore a partir do array original
-    if(original_array != "empty" && !original_array.empty()){
+    // 1. Reconstrói a árvore a partir do array original em pré-ordem
+    if(original_pre_order != "empty" && !original_pre_order.empty()){
         std::string token;
         size_t pos = 0;
 
-        while((pos = original_array.find(',')) != std::string::npos){
-            token = original_array.substr(0, pos);
+        while((pos = original_pre_order.find(',')) != std::string::npos){
+            token = original_pre_order.substr(0, pos);
             if(!token.empty())
                 bst.root = bst.insert(bst.root, std::stoi(token));
-            original_array.erase(0, pos + 1);        
+            original_pre_order.erase(0, pos + 1);        
         }
 
-        if(!original_array.empty())
-            bst.root = bst.insert(bst.root, std::stoi(original_array));
+        if(!original_pre_order.empty())
+            bst.root = bst.insert(bst.root, std::stoi(original_pre_order));
     }
 
-    // 2. Aplica a operação de inserção ou remoção
+    // 2. Aplica a operação de inserção, remoção ou busca na árvore
     if(operation == "insert"){
         bst.root = bst.insert(bst.root, value);
     }else if(operation == "remove"){
         bst.root = bst.remove(bst.root, value);
+    }else if(operation == "search"){
+        
     }
 
-    // 3. Imprime o grafo resultante no formato DOT
-    bst.printDOT();
+    // 3. Imprime o grafo resultante no formato de código DOT
+    bst.printDOTcode();
 
-    // 4. Imprime o separador
+    // 4. Imprime o 1º separador
     std::cout << "---" << std::endl;
 
-    // 5. Imprime o array resultante da árvore
-    std::vector<int> result_array;
-    bst.collectElements(bst.root, result_array);
-    
-    if(result_array.empty()){
+    // 5. Imprime o array resultante da árvore em ordem
+    std::vector<int> result_in_order;
+    bst.inOrder(bst.root, result_in_order);
+
+    if(result_in_order.empty()){
         std::cout << "empty" << std::endl;
     }else{
-        for(size_t i = 0; i < result_array.size(); ++i){
-            std::cout << result_array[i] << (i == result_array.size() - 1 ? "" : ",");
+        for(size_t i = 0; i < result_in_order.size(); ++i){
+            std::cout << result_in_order[i] << (i == result_in_order.size() - 1 ? "" : ",");
+        }
+        std::cout << std::endl;
+    }
+
+    // 6. Imprime o 2º separador
+    std::cout << "---" << std::endl;
+
+    // 7. Imprime o array resultante da árvore em pré-ordem
+    std::vector<int> result_pre_order;
+    bst.preOrder(bst.root, result_pre_order);
+    
+    if(result_pre_order.empty()){
+        std::cout << "empty" << std::endl;
+    }else{
+        for(size_t i = 0; i < result_pre_order.size(); ++i){
+            std::cout << result_pre_order[i] << (i == result_pre_order.size() - 1 ? "" : ",");
+        }
+        std::cout << std::endl;
+    }
+
+    // 8. Imprime o 3º separador
+    std::cout << "---" << std::endl;
+
+    // 9. Imprime o array resultante da árvore em pós-ordem
+    std::vector<int> result_post_order;
+    bst.postOrder(bst.root, result_post_order);
+
+    if(result_post_order.empty()){
+        std::cout << "empty" << std::endl;
+    }else{
+        for(size_t i = 0; i < result_post_order.size(); ++i){
+            std::cout << result_post_order[i] << (i == result_post_order.size() - 1 ? "" : ",");
         }
         std::cout << std::endl;
     }
