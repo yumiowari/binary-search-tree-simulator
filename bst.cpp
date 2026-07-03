@@ -113,10 +113,18 @@ class BinarySearchTree{
             postOrder(n->right, V);
             V.push_back(n->value);
         }
+
+        bool search(node *n, int v){
+            if(n == nullptr)return false;
+
+            if(v == n->value)return true;
+            else if(v < n->value)return search(n->left, v);
+            else return search(n->right, v);
+        }
 };
 
 void defaultOutput(){
-    std::cout << "digraph G {}" << std::endl << "---" << std::endl;
+    std::cout << "digraph G {}" << std::endl;
 }
 
 int main(int argc, char **argv){
@@ -125,6 +133,8 @@ int main(int argc, char **argv){
 
         return 0;
     }
+
+    bool found;
 
     std::string original_in_order = argv[1];
     std::string original_pre_order = argv[2];
@@ -156,7 +166,7 @@ int main(int argc, char **argv){
     }else if(operation == "remove"){
         bst.root = bst.remove(bst.root, value);
     }else if(operation == "search"){
-        
+        found = bst.search(bst.root, value);
     }
 
     // 3. Imprime o grafo resultante no formato de código DOT
@@ -208,6 +218,18 @@ int main(int argc, char **argv){
             std::cout << result_post_order[i] << (i == result_post_order.size() - 1 ? "" : ",");
         }
         std::cout << std::endl;
+    }
+
+    // 10. Imprime o 4º separador
+    std::cout << "---" << std::endl;
+
+    // 11. Imprime a mensagem de feedback da operação de busca, se aplicável
+    if(operation == "search"){
+        if(found){
+            std::cout << "Elemento \"" << value << "\" encontrado." << std::endl;
+        }else{
+            std::cout << "Elemento \"" << value << "\" não encontrado." << std::endl;
+        }
     }
 
     return 0;

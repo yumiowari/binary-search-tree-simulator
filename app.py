@@ -55,15 +55,21 @@ if operation:
             check=True
         )
 
+        if operation == 'insert':
+            st.toast(f'Elemento {value} inserido com sucesso.')
+        elif operation == 'remove':
+            st.toast(f'Elemento {value} removido com sucesso.')
+
         # 4.3. Divide a saída do programa C++ pelo separador
         parts = result.stdout.strip().split('---')
         # A saída do programa C++ é dividida em quatro partes: o código DOT e as três listas de elementos atualizadas.
 
-        if len(parts) >= 4:
+        if len(parts) >= 5:
             st.session_state.dot_code = parts[0]
             in_order_string = parts[1].strip()
             pre_order_string = parts[2].strip()
             post_order_string = parts[3].strip()
+            search_feedback = parts[4].strip()
 
             # 4.4. Atualiza as listas de elementos na memória da interface Streamlit
             if in_order_string == 'empty' or not in_order_string:
@@ -80,6 +86,13 @@ if operation:
                 st.session_state.post_order = []
             else:
                 st.session_state.post_order = [int(x) for x in post_order_string.split(',')]
+
+            # 4.5. Se houver, exibe a mensagem de feedback da operação de busca
+            if search_feedback:
+                if "não encontrado" in search_feedback:
+                    st.error(search_feedback)
+                else:
+                    st.success(search_feedback)
 
     except FileNotFoundError:
         st.error("O executável './bst' não foi encontrado. Compile o código C++ primeiro.")
