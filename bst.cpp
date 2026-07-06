@@ -134,21 +134,15 @@ class BinarySearchTree{
         int higher(node *n){
             if(n == nullptr)return 0;
 
-            if(n->right == nullptr && n->left == nullptr)return n->value;
-
-            if(n->right != nullptr && n->left != nullptr)return std::max(higher(n->right), higher(n->left));
-            else if(n->right != nullptr)return higher(n->right);
-            else return higher(n->left);
+            if(n->right != nullptr)return higher(n->right);
+            return n->value;
         }
 
         int lowest(node *n){
             if(n == nullptr)return 0;
 
-            if(n->right == nullptr && n->left == nullptr)return n->value;
-
-            if(n->right != nullptr && n->left != nullptr)return std::min(lowest(n->right), lowest(n->left));
-            else if(n->right != nullptr)return lowest(n->right);
-            else return lowest(n->left);
+            if(n->left != nullptr)return lowest(n->left);
+            return n->value;
         }
 
         int sum(node *n){
@@ -166,10 +160,10 @@ class BinarySearchTree{
         int average(node *n){
             if(n == nullptr)return 0;
 
-            int s = sum(n);
             int c = count(n);
+            if(c == 0)return 0;
 
-            return c > 0 ? s / c : 0;
+            return sum(n) / c;
         }
 
         int leaves(node *n){
@@ -203,7 +197,7 @@ int main(int argc, char **argv){
 
     std::string pre_order_string = argv[1];
     std::string operation = argv[2];
-    int value = std::stoi(argv[3]);
+    int value = 0; if(argc > 3)value = std::stoi(argv[3]);
     BinarySearchTree bst;
     json response;
     bool found;
