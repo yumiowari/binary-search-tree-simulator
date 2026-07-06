@@ -45,30 +45,25 @@ col7, col8, col9 = st.columns(3)
 with col7:
     average_btn = st.button('Retornar média dos valores', use_container_width=True)
 with col8:
-    leaves_btn = st.button('Retornar número de folhas', use_container_width=True)
+    leaves_count_btn = st.button('Retornar número de folhas', use_container_width=True)
 with col9:
     height_btn = st.button('Retornar altura da árvore', use_container_width=True)
 
 # 3. Define qual operação foi solicitada pelo usuário
-operation = None
-if insert_btn:
-    operation = 'insert'
-elif remove_btn:
-    operation = 'remove'
-elif search_btn:
-    operation = 'search'
-elif higher_value_btn:
-    operation = 'higher_value'
-elif lowest_value_btn:
-    operation = 'lowest_value'
-elif sum_btn:
-    operation = 'sum'
-elif average_btn:
-    operation = 'average'
-elif leaves_btn:
-    operation = 'leaves'
-elif height_btn:
-    operation = 'height'
+button_operations = {
+    insert_btn: 'insert',
+    remove_btn: 'remove',
+    search_btn: 'search',
+    higher_value_btn: 'higher',
+    lowest_value_btn: 'lowest',
+    sum_btn: 'sum',
+    average_btn: 'average',
+    leaves_count_btn: 'leaves',
+    height_btn: 'height'
+}
+
+operation = button_operations.get(True, None)
+# Retorna a operação correspondente ao botão que for True (ou None se nenhum for clicado)
 
 st.divider()
 
@@ -109,6 +104,12 @@ if operation:
                     st.error(response["search_result"])
                 else:
                     st.success(response["search_result"])
+
+            # 4.6. Se houverem, exibe as demais mensagens de feedback das operações de maior, menor, soma, média, folhas e altura
+            if operation in ["higher", "lowest", "sum", "average", "leaves", "height"]:
+                field = f"{operation}_result"
+                if field in response:
+                    st.info(response[field])
 
     except FileNotFoundError:
         st.error("O executável './bst' não foi encontrado. Compile o código C++ primeiro.")
