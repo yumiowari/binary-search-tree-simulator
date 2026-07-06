@@ -2,6 +2,10 @@
 #include <vector>
 #include <string>
 
+// middleware para serialização e desserialização de JSON
+#include <nlohmann/json.hpp>
+using json = nlohmann::json;
+
 struct node{
     int value;
     node *left;
@@ -54,40 +58,53 @@ class BinarySearchTree{
             return n;
         }
 
-        void generateDOTconnections(node *n){
-            if(n == nullptr)return;
+        bool search(node *n, int v){
+            if(n == nullptr)return false;
+
+            if(v == n->value)return true;
+            else if(v < n->value)return search(n->left, v);
+            else return search(n->right, v);
+        }
+
+        std::string generateDOTconnections(node *n){
+            if(n == nullptr) return "";
+
+            // Caso nó folha
+            if(n->left == nullptr && n->right == nullptr)
+                return "    " + std::to_string(n->value) + ";\n";
+
+            // Caso nó com filhos
+            std::string connections = "";
 
             if(n->left != nullptr){
-                std::cout << "    " << n->value << " -> " << n->left->value << ";" << std::endl;
-                generateDOTconnections(n->left);
+                connections += "    " + std::to_string(n->value) + " -> " + std::to_string(n->left->value) + ";\n";
+                connections += generateDOTconnections(n->left);
             }
             
             if(n->right != nullptr){
-                std::cout << "    " << n->value << " -> " << n->right->value << ";" << std::endl;
-                generateDOTconnections(n->right);
+                connections += "    " + std::to_string(n->value) + " -> " + std::to_string(n->right->value) + ";\n";
+                connections += generateDOTconnections(n->right);
             }
 
-            if(n->left == nullptr && n->right == nullptr){
-                std::cout << "    " << n->value << ";" << std::endl;
-            }
+            return connections;
         }
 
-        void printDOTcode(){
-        // o grafo será renderizado a partir do código DOT gerado a partir das conexões em generateDOTconnections()
-
-            std::cout << "digraph G {" << std::endl;
+        std::string printDOTcode(){
+            std::string dot_code = "digraph G {\n";
 
             // Configurações de estilo do grafo
                 // A. Fundo transparente (visualização compatível com temas claros e escuros)
-            std::cout << "    bgcolor=\"transparent\";\n";
+            dot_code += "    bgcolor=\"transparent\";\n";
                 // B. Vértices preenchidos com egyptian blue, borda com charcoal e texto com offwhite
-            std::cout << "    node [style=filled, fillcolor=\"#1434A4\", color=\"#333333\", fontcolor=\"#f9f9f9\", fontname=\"Helvetica\", shape=circle];\n";
+            dot_code += "    node [style=filled, fillcolor=\"#1434A4\", color=\"#333333\", fontcolor=\"#f9f9f9\", fontname=\"Helvetica\", shape=circle];\n";
                 // C. Arestas com cor charcoal, setas em forma de V
-            std::cout << "    edge [color=\"#333333\", arrowhead=vee];\n";
+            dot_code += "    edge [color=\"#333333\", arrowhead=vee];\n";
             
-            generateDOTconnections(root);
+            dot_code += generateDOTconnections(root);
             
-            std::cout << "}" << std::endl;
+            dot_code += "}\n";
+
+            return dot_code;
         }
 
         void inOrder(node *n, std::vector<int> &V){
@@ -113,51 +130,40 @@ class BinarySearchTree{
             postOrder(n->right, V);
             V.push_back(n->value);
         }
-
-        bool search(node *n, int v){
-            if(n == nullptr)return false;
-
-            if(v == n->value)return true;
-            else if(v < n->value)return search(n->left, v);
-            else return search(n->right, v);
-        }
 };
 
-void defaultOutput(){
-    std::cout << "digraph G {}" << std::endl;
+std::string defaultOutput(){
+    return "digraph G {}";
 }
 
 int main(int argc, char **argv){
-    if(argc < 4){
-        defaultOutput();
+    if(argc < 3){
+        std::cout << defaultOutput() << std::endl;
 
         return 0;
     }
 
+    std::string pre_order_string = argv[1];
+    std::string operation = argv[2];
+    int value = std::stoi(argv[3]);
+    BinarySearchTree bst;
+    json response;
     bool found;
 
-    std::string original_in_order = argv[1];
-    std::string original_pre_order = argv[2];
-    std::string original_post_order = argv[3];
-    std::string operation = argv[4];
-    int value = std::stoi(argv[5]);
-
-    BinarySearchTree bst;
-
     // 1. Reconstrói a árvore a partir do array original em pré-ordem
-    if(original_pre_order != "empty" && !original_pre_order.empty()){
+    if(pre_order_string != "empty" && !pre_order_string.empty()){
         std::string token;
         size_t pos = 0;
 
-        while((pos = original_pre_order.find(',')) != std::string::npos){
-            token = original_pre_order.substr(0, pos);
+        while((pos = pre_order_string.find(',')) != std::string::npos){
+            token = pre_order_string.substr(0, pos);
             if(!token.empty())
                 bst.root = bst.insert(bst.root, std::stoi(token));
-            original_pre_order.erase(0, pos + 1);        
+            pre_order_string.erase(0, pos + 1);        
         }
 
-        if(!original_pre_order.empty())
-            bst.root = bst.insert(bst.root, std::stoi(original_pre_order));
+        if(!pre_order_string.empty())
+            bst.root = bst.insert(bst.root, std::stoi(pre_order_string));
     }
 
     // 2. Aplica a operação de inserção, remoção ou busca na árvore
@@ -170,67 +176,24 @@ int main(int argc, char **argv){
     }
 
     // 3. Imprime o grafo resultante no formato de código DOT
-    bst.printDOTcode();
+    response["dot_code"] = bst.printDOTcode();
 
-    // 4. Imprime o 1º separador
-    std::cout << "---" << std::endl;
+    // 4. Imprime o array resultante da árvore em ordem, pré-ordem e pós-ordem
+    std::vector<int> in_order, pre_order, post_order;
+    bst.inOrder(bst.root, in_order);
+    bst.preOrder(bst.root, pre_order);
+    bst.postOrder(bst.root, post_order);
+    response["in_order"] = in_order;
+    response["pre_order"] = pre_order;
+    response["post_order"] = post_order;
 
-    // 5. Imprime o array resultante da árvore em ordem
-    std::vector<int> result_in_order;
-    bst.inOrder(bst.root, result_in_order);
-
-    if(result_in_order.empty()){
-        std::cout << "empty" << std::endl;
-    }else{
-        for(size_t i = 0; i < result_in_order.size(); ++i){
-            std::cout << result_in_order[i] << (i == result_in_order.size() - 1 ? "" : ",");
-        }
-        std::cout << std::endl;
-    }
-
-    // 6. Imprime o 2º separador
-    std::cout << "---" << std::endl;
-
-    // 7. Imprime o array resultante da árvore em pré-ordem
-    std::vector<int> result_pre_order;
-    bst.preOrder(bst.root, result_pre_order);
-    
-    if(result_pre_order.empty()){
-        std::cout << "empty" << std::endl;
-    }else{
-        for(size_t i = 0; i < result_pre_order.size(); ++i){
-            std::cout << result_pre_order[i] << (i == result_pre_order.size() - 1 ? "" : ",");
-        }
-        std::cout << std::endl;
-    }
-
-    // 8. Imprime o 3º separador
-    std::cout << "---" << std::endl;
-
-    // 9. Imprime o array resultante da árvore em pós-ordem
-    std::vector<int> result_post_order;
-    bst.postOrder(bst.root, result_post_order);
-
-    if(result_post_order.empty()){
-        std::cout << "empty" << std::endl;
-    }else{
-        for(size_t i = 0; i < result_post_order.size(); ++i){
-            std::cout << result_post_order[i] << (i == result_post_order.size() - 1 ? "" : ",");
-        }
-        std::cout << std::endl;
-    }
-
-    // 10. Imprime o 4º separador
-    std::cout << "---" << std::endl;
-
-    // 11. Imprime a mensagem de feedback da operação de busca, se aplicável
+    // 5. Imprime a mensagem de feedback da operação de busca, se aplicável
     if(operation == "search"){
-        if(found){
-            std::cout << "Elemento \"" << value << "\" encontrado." << std::endl;
-        }else{
-            std::cout << "Elemento \"" << value << "\" não encontrado." << std::endl;
-        }
+        response["search_result"] = found ? "Elemento " + std::to_string(value) + " encontrado." : "Elemento " + std::to_string(value) + " não encontrado.";
     }
+
+    std::string json_output = response.dump();
+    std::cout << json_output << std::endl;
 
     return 0;
 }
